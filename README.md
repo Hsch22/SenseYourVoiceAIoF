@@ -6,7 +6,7 @@ SenseYourVoice是一个多功能语音理解与处理应用，基于SenseVoice-S
 
 ### 主要功能
 
-- **多语言语音识别**：支持中文、英语和粤语的语音转文字
+- **多语言语音识别**：支持中文、英语、粤语等语言的语音转文字
 - **语音内容理解**：分析语音内容并提供智能回复
 - **专业任务处理**：根据语音内容执行特定任务
 - **多轮对话**：支持基于语音内容的多轮问答
@@ -24,7 +24,7 @@ SenseYourVoice是一个多功能语音理解与处理应用，基于SenseVoice-S
 1. **克隆仓库**
 
 ```bash
-git clone [仓库地址]
+git clone https://github.com/Hsch22/SenseYourVoiceAIoF.git
 cd SenseYourVoice
 ```
 
@@ -67,11 +67,6 @@ python main.py
 - `--share`：创建公共链接分享界面
 - `--port`：服务端口，默认7800
 
-示例：
-
-```bash
-python main.py --model_dir "./models/SenseVoiceSmall" --device "cpu" --port 8000
-```
 
 ### Web界面使用
 
