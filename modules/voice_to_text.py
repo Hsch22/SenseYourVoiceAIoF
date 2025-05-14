@@ -9,17 +9,24 @@ from funasr import AutoModel
 from funasr.utils.postprocess_utils import rich_transcription_postprocess
 
 # 设置日志
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+logging.basicConfig(
+    level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
 logger = logging.getLogger('VoiceToTextModule')
 
+
 class VoiceToTextModule:
-    def __init__(self, model_dir="iic/SenseVoiceSmall", device="cuda:0" if torch.cuda.is_available() else "cpu"):
+    def __init__(
+        self,
+        model_dir="iic/SenseVoiceSmall",
+        device="cuda:0" if torch.cuda.is_available() else "cpu",
+    ):
         self.model_dir = model_dir
         self.device = device
         self.model = None
         self.init_error = None
         self.initialize_model()
-        
+
     def initialize_model(self):
         try:
             self.model = AutoModel(
@@ -31,11 +38,23 @@ class VoiceToTextModule:
                 device=self.device,
             )
             logger.info(f"语音转文字模块初始化成功，使用设备: {self.device}")
+        except FileNotFoundError as e:
+            error_msg = f"模型文件或其依赖项缺失: {self.model_dir}. 错误: {e}"
+            logger.error(error_msg)
+            self.init_error = error_msg
+        except ImportError as e:
+            error_msg = f"初始化语音模型时发生导入错误: {e}"
+            logger.error(error_msg)
+            self.init_error = error_msg
+        except RuntimeError as e:
+            error_msg = f"初始化语音模型时发生运行时错误 (可能是设备配置问题): {e}"
+            logger.error(error_msg)
+            self.init_error = error_msg
         except Exception as e:
-            error_msg = str(e)
-            logger.error(f"语音转文字模块初始化失败: {error_msg}")
-            self.init_error = error_msg  # 保存错误信息
-    
+            error_msg = f"语音转文字模块初始化时发生未知错误: {str(e)}"
+            logger.error(error_msg, exc_info=True)
+            self.init_error = error_msg
+
     emoji_dict = {
         "<|nospeech|><|Event_UNK|>": "❓",
         "<|zh|>": "",
@@ -67,7 +86,7 @@ class VoiceToTextModule:
         "<|GBG|>": "",
         "<|Event_UNK|>": "",
     }
-    
+
     emo_dict = {
         "<|HAPPY|>": "😊",
         "<|SAD|>": "😔",
@@ -77,7 +96,7 @@ class VoiceToTextModule:
         "<|DISGUSTED|>": "🤢",
         "<|SURPRISED|>": "😮",
     }
-    
+
     event_dict = {
         "<|BGM|>": "🎼",
         "<|Speech|>": "",
@@ -88,7 +107,7 @@ class VoiceToTextModule:
         "<|Breath|>": "",
         "<|Cough|>": "🤧",
     }
-    
+
     lang_dict = {
         "<|zh|>": "<|lang|>",
         "<|en|>": "<|lang|>",
@@ -97,16 +116,16 @@ class VoiceToTextModule:
         "<|ko|>": "<|lang|>",
         "<|nospeech|>": "<|lang|>",
     }
-    
+
     emo_set = {"😊", "😔", "😡", "😰", "🤢", "😮"}
     event_set = {"🎼", "👏", "😀", "😭", "🤧", "😷"}
-    
+
     def format_str(self, s):
         """基本格式化，替换特殊标记为表情符号"""
         for sptk in self.emoji_dict:
             s = s.replace(sptk, self.emoji_dict[sptk])
         return s
-    
+
     def format_str_v2(self, s):
         """高级格式化，处理情感和事件标记"""
         sptk_dict = {}
@@ -126,11 +145,13 @@ class VoiceToTextModule:
             s = s.replace(" " + emoji, emoji)
             s = s.replace(emoji + " ", emoji)
         return s.strip()
-    
+
     def format_str_v3(self, s):
         """完整格式化，处理多语言和标记"""
+
         def get_emo(s):
             return s[-1] if s[-1] in self.emo_set else None
+
         def get_event(s):
             return s[0] if s[0] in self.event_set else None
 
@@ -151,14 +172,14 @@ class VoiceToTextModule:
             new_s += s_list[i].strip().lstrip()
         new_s = new_s.replace("The.", " ")
         return new_s.strip()
-    
+
     def transcribe(self, audio_path, language="auto"):
         """将音频转换为文本
-        
+
         Args:
             audio_path: 音频文件路径或音频数据
             language: 语言代码，可选值："auto", "zh", "en", "yue", "ja", "ko", "nospeech"
-            
+
         Returns:
             dict: 包含转录结果或错误信息的字典
         """
@@ -167,7 +188,7 @@ class VoiceToTextModule:
             if self.model is None:
                 error_msg = getattr(self, 'init_error', '未知错误')
                 return {"success": False, "error": f"模型未初始化: {error_msg}"}
-            
+
             # 处理不同类型的输入，与webui.py保持一致
             if isinstance(audio_path, str):
                 if not os.path.exists(audio_path):
@@ -183,15 +204,26 @@ class VoiceToTextModule:
                     logger.info(f"重采样音频从 {fs}Hz 到 16000Hz")
                     try:
                         import torchaudio
+
                         resampler = torchaudio.transforms.Resample(fs, 16000)
                         audio_data_t = torch.from_numpy(audio_data).to(torch.float32)
                         audio_data = resampler(audio_data_t[None, :])[0, :].numpy()
                     except ImportError:
-                        return {"success": False, "error": "需要安装torchaudio以支持音频重采样"}
+                        logger.error("torchaudio 未安装，无法进行音频重采样。")
+                        return {
+                            "success": False,
+                            "error": "需要安装torchaudio以支持音频重采样",
+                        }
+                    except Exception as e:
+                        logger.error(f"音频重采样失败: {e}", exc_info=True)
+                        return {"success": False, "error": f"音频重采样失败: {str(e)}"}
                 input_data = audio_data
             else:
-                return {"success": False, "error": f"不支持的音频输入类型: {type(audio_path)}"}
-                
+                return {
+                    "success": False,
+                    "error": f"不支持的音频输入类型: {type(audio_path)}",
+                }
+
             # 使用SenseVoice模型处理音频，与demo1.py和webui.py保持一致
             res = self.model.generate(
                 input=input_data,
@@ -202,25 +234,30 @@ class VoiceToTextModule:
                 merge_vad=True,
                 merge_length_s=15,
             )
-            
+
             if not res:
                 return {"success": False, "error": "转录失败，未返回结果"}
-            
+
             # 获取原始文本
             raw_text = res[0]["text"]
-            
+
             # 使用rich_transcription_postprocess处理文本
             basic_text = rich_transcription_postprocess(raw_text)
-            
+
             # 使用format_str_v3进一步格式化文本，添加表情符号和事件标记
             formatted_text = self.format_str_v3(raw_text)
-            
+
             return {
-                "success": True, 
+                "success": True,
                 "text": formatted_text,
                 "raw_text": raw_text,
-                "basic_text": basic_text
+                "basic_text": basic_text,
             }
+        except RuntimeError as e:
+            logger.error(
+                f"FunASR 模型推理 (generate) 时发生运行时错误: {str(e)}", exc_info=True
+            )
+            return {"success": False, "error": f"语音识别模型推理错误: {str(e)}"}
         except Exception as e:
-            logger.error(f"转录过程发生错误: {str(e)}")
-            return {"success": False, "error": f"转录过程发生错误: {str(e)}"}
+            logger.error(f"转录过程发生未知错误: {str(e)}", exc_info=True)
+            return {"success": False, "error": f"转录过程发生未知错误: {str(e)}"}
