@@ -426,7 +426,7 @@ def main():
                     with gr.Accordion("参数设置", open=False):
                         max_tokens = gr.Slider(
                             minimum=1,
-                            maximum=2048,
+                            maximum=4096,
                             value=default_config["llm_max_tokens"],
                             step=1,
                             label="Max Tokens",
