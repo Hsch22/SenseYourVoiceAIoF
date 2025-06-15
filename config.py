@@ -14,7 +14,7 @@ DEFAULT_CONFIG = {
     "understanding_api_url": os.environ.get(
         "UNDERSTANDING_API_URL", "https://api.siliconflow.cn/v1/chat/completions"
     ),
-    "understanding_model": "Qwen/Qwen2.5-72B-Instruct-128K",  # 默认使用的模型
+    "understanding_model": "Tongyi-Zhiwen/QwenLong-L1-32B",  # 默认使用的模型
     # 专业任务模块配置
     "specialized_api_key": os.environ.get(
         "SPECIALIZED_API_KEY", "sk-qseennfhdprismchczwnkzpohyjmuwgpiaywuclsisgugfvo"
@@ -22,7 +22,7 @@ DEFAULT_CONFIG = {
     "specialized_api_url": os.environ.get(
         "SPECIALIZED_API_URL", "https://api.siliconflow.cn/v1/chat/completions"
     ),
-    "specialized_model": "Qwen/Qwen2.5-72B-Instruct-128K",  # 默认使用的模型
+    "specialized_model": "Tongyi-Zhiwen/QwenLong-L1-32B",  # 默认使用的模型
     # 应用配置
     "auto_init": False,  # 是否自动初始化应用
     "share": False,  # 是否创建公共链接分享界面

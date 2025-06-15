@@ -101,7 +101,6 @@ class MultiHeadedAttentionSANM(nn.Module):
         """Construct an MultiHeadedAttention object."""
         super().__init__()
         assert n_feat % n_head == 0
-        # We assume d_v always equals d_k
         self.d_k = n_feat // n_head
         self.h = n_head
         # self.linear_q = nn.Linear(n_feat, n_feat)

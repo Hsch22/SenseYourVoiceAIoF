@@ -224,7 +224,6 @@ class VoiceToTextModule:
                     "error": f"不支持的音频输入类型: {type(audio_path)}",
                 }
 
-            # 使用SenseVoice模型处理音频，与demo1.py和webui.py保持一致
             res = self.model.generate(
                 input=input_data,
                 cache={},

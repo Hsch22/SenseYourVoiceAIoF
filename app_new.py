@@ -18,31 +18,23 @@ logging.basicConfig(
 logger = logging.getLogger('SenseYourVoiceApp')
 
 
-def validate_response_dict(
-    response_dict, required_keys, context_msg="Stream"
-):  # Modified context_msg default
+def validate_response_dict(response_dict, required_keys, context_msg="Stream"):
     """
     简单的校验函数，检查字典中是否存在所有必需的键。
     如果校验失败，记录错误并返回一个标准的错误字典。
     """
     if not isinstance(response_dict, dict):
-        error_msg = f"{context_msg} - 响应不是一个字典: {type(response_dict)}"  # Added hyphen for clarity
+        error_msg = f"{context_msg} - 响应不是一个字典: {type(response_dict)}"
         logger.error(error_msg)
-        # For streaming, ensure 'is_final' is present in the error dict
-        # For non-streaming, it might not be needed, but doesn't hurt
+
         return {"success": False, "error": error_msg, "is_final": True}
 
     missing_keys = [key for key in required_keys if key not in response_dict]
     if missing_keys:
-        error_msg = f"{context_msg} - 响应中缺少关键字段: {', '.join(missing_keys)}"  # Added hyphen
+        error_msg = f"{context_msg} - 响应中缺少关键字段: {', '.join(missing_keys)}"
         logger.error(error_msg)
         return {"success": False, "error": error_msg, "is_final": True}
 
-    # If success is explicitly False, but no error key, it's a bit ambiguous.
-    # The original dict might have other important info. For now, we log a warning
-    # and let the original logic proceed if 'success': False was intentional from the module.
-    # If 'success' key itself is missing, the check above (missing_keys) would have caught it
-    # if 'success' was in required_keys.
     if (
         "success" in response_dict
         and not response_dict["success"]
@@ -51,11 +43,6 @@ def validate_response_dict(
         logger.warning(
             f"{context_msg} - 响应标记为失败但未提供错误信息。原始响应: {response_dict}"
         )
-        # Optionally, you could enforce an error key here:
-        # response_dict["error"] = "响应标记为失败但未提供错误信息。"
-        # return response_dict
-        # Or return a new error dict:
-        # return {"success": False, "error": f"{context_msg} - 响应标记为失败但未提供错误信息。", "is_final": True}
 
     return None  # 表示校验通过，调用者应继续处理原始 response_dict
 
@@ -111,9 +98,6 @@ class SenseYourVoiceApp:
             # --- 校验结束 ---
 
             if not transcription_result["success"]:
-                # 'error' key should be present if success is False, checked by validate_response_dict if "error" was required
-                # or handled by the warning if "error" wasn't required for success=False cases.
-                # If we reach here, transcription_result["error"] should exist if success is False.
                 error_msg = transcription_result.get(
                     "error", "语音转文字失败，但未提供明确错误信息。"
                 )
@@ -136,7 +120,7 @@ class SenseYourVoiceApp:
             understanding_chunk_required_keys = [
                 "success",
                 "is_final",
-            ]  # "response_chunk", "error", "needs_specialized_task" can be conditional
+            ]
 
             for chunk_data in understanding_stream:
                 # --- 校验 UnderstandingModule 流式块 ---
@@ -198,7 +182,7 @@ class SenseYourVoiceApp:
                 specialized_chunk_required_keys = [
                     "success",
                     "is_final",
-                ]  # "result_chunk", "error" can be conditional
+                ]
 
                 for specialized_chunk_data in specialized_task_stream:
                     # --- 校验 SpecializedTaskModule 流式块 ---

@@ -241,7 +241,7 @@ def process_audio(audio_file, chat_history, audio_text):
         audio_text = transcription  # 存储音频文本内容
 
         # 系统反馈消息
-        system_message = "我已成功理解音频文件，您想了解些什么？"
+        system_message = "太好了！我已经成功理解了您的音频内容～ 🎉 有什么想要了解或分析的吗？我很乐意为您解答！"
         new_chat_history = list(chat_history) if chat_history else []
         new_chat_history.append(("", system_message))
 
@@ -375,8 +375,6 @@ def process_text(
                     return
 
                 if specialized_chunk_data["is_final"]:
-                    # 可选：获取完整的专业任务结果
-                    # full_specialized_result = specialized_chunk_data.get("full_result", full_specialized_result)
                     break  # 专业任务流结束
 
                 result_chunk = specialized_chunk_data.get("result_chunk", "")
@@ -526,9 +524,6 @@ def main():
                             label="API地址", value=args.specialized_api_url or ""
                         )
 
-            # init_btn = gr.Button(
-            #     "初始化应用", variant="primary"
-            # )  # 使用 primary 变体突出按钮
             init_btn = gr.Button("初始化应用", elem_classes="primary_button")
             init_output = gr.Textbox(
                 label="初始化状态", interactive=False
@@ -594,7 +589,6 @@ def main():
                             step=1,
                             label="Top K",
                         )
-                        # stop = gr.Textbox(label="Stop Sequences", value=default_config["llm_stop"] or "") # Stop sequences might be complex for UI
                     process_text_btn = gr.Button("继续对话")
 
             # 显示对话历史
@@ -664,9 +658,6 @@ def main():
                             visible=False
                         )
 
-                # 在处理完后清空输入框
-                # 在process_text_and_update函数中，修改yield语句
-                # yield new_history, new_history, gr.update(value=specialized if specialized else "", visible=specialized is not None), gr.update(value="", visible=False), new_audio_text, gr.update(value=text)
                 yield new_history, new_history, gr.update(
                     value=specialized if specialized else "",
                     visible=specialized is not None,
