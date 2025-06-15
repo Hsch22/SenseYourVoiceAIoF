@@ -24,6 +24,130 @@ if not logger.handlers:
         format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
     )
 
+# 自定义CSS样式 - 动态渐变背景和微光加载效果
+CUSTOM_CSS = """
+/* 动态渐变背景 */
+.gradio-container {
+    background: linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab, #f093fb, #f5576c, #4facfe, #00f2fe);
+    background-size: 400% 400%;
+    animation: gradient-shift 15s ease infinite;
+    min-height: 100vh;
+}
+
+@keyframes gradient-shift {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
+
+/* 微光加载效果 */
+.shimmer-loading {
+    position: relative;
+    overflow: hidden;
+    background: linear-gradient(90deg, rgba(255,255,255,0.1) 25%, rgba(255,255,255,0.3) 50%, rgba(255,255,255,0.1) 75%);
+    background-size: 200% 100%;
+    animation: shimmer 2s infinite;
+    border-radius: 8px;
+    padding: 16px;
+    margin: 16px 0;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255,255,255,0.2);
+}
+
+@keyframes shimmer {
+    0% { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
+}
+
+/* 微光加载指示器 */
+.loading-indicator {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 12px 24px;
+    background: rgba(255,255,255,0.15);
+    border-radius: 25px;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255,255,255,0.2);
+    margin: 16px auto;
+    width: fit-content;
+}
+
+.loading-dots {
+    display: inline-flex;
+    gap: 4px;
+}
+
+.loading-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: linear-gradient(45deg, #ff6b6b, #4ecdc4, #45b7d1, #96ceb4);
+    animation: loading-pulse 1.4s infinite ease-in-out both;
+}
+
+.loading-dot:nth-child(1) { animation-delay: -0.32s; }
+.loading-dot:nth-child(2) { animation-delay: -0.16s; }
+.loading-dot:nth-child(3) { animation-delay: 0s; }
+
+@keyframes loading-pulse {
+    0%, 80%, 100% { transform: scale(0.8); opacity: 0.5; }
+    40% { transform: scale(1.0); opacity: 1; }
+}
+
+/* 增强按钮效果 */
+.primary-button {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border: none;
+    border-radius: 8px;
+    padding: 12px 24px;
+    color: white;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.primary-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+}
+
+.primary-button::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+    transition: left 0.5s;
+}
+
+.primary-button:hover::before {
+    left: 100%;
+}
+
+/* 卡片容器美化 */
+.card-container {
+    background: rgba(255,255,255,0.1);
+    backdrop-filter: blur(10px);
+    border-radius: 16px;
+    border: 1px solid rgba(255,255,255,0.2);
+    padding: 20px;
+    margin: 16px 0;
+}
+
+/* 聊天机器人美化 */
+.chatbot-container {
+    background: rgba(255,255,255,0.05);
+    backdrop-filter: blur(10px);
+    border-radius: 16px;
+    border: 1px solid rgba(255,255,255,0.1);
+}
+"""
+
 
 def validate_response_dict(
     response_dict, required_keys, context_msg="Stream"
@@ -80,9 +204,9 @@ def initialize_app(
 
     try:
         sense_app = SenseYourVoiceApp(config)
-        return "应用初始化成功！"
+        return "应用初始化成功！", gr.update(visible=False)  # 隐藏加载指示器
     except Exception as e:
-        return f"应用初始化失败: {str(e)}"
+        return f"应用初始化失败: {str(e)}", gr.update(visible=False)  # 隐藏加载指示器
 
 
 def process_audio(audio_file, chat_history, audio_text):
@@ -330,12 +454,29 @@ def main():
     args = parser.parse_args()
 
     # 创建Gradio界面
-    with gr.Blocks(title="SenseYourVoice - 语音理解与处理", theme=grt.Citrus()) as demo:
+    with gr.Blocks(
+        title="SenseYourVoice - 语音理解与处理", theme=grt.Citrus(), css=CUSTOM_CSS
+    ) as demo:
         gr.Markdown(
             """
         # SenseYourVoice - 语音理解与处理
         上传音频文件，系统将解读并记住内容，然后您可以进行多次问答互动。
         """
+        )
+
+        # 微光加载指示器
+        loading_indicator = gr.HTML(
+            """
+            <div class="loading-indicator" style="display: none;">
+                <span style="color: white; font-weight: 500;">处理中</span>
+                <div class="loading-dots">
+                    <div class="loading-dot"></div>
+                    <div class="loading-dot"></div>
+                    <div class="loading-dot"></div>
+                </div>
+            </div>
+            """,
+            visible=False,
         )
 
         # 应用设置部分
@@ -385,9 +526,10 @@ def main():
                             label="API地址", value=args.specialized_api_url or ""
                         )
 
-            init_btn = gr.Button(
-                "初始化应用", variant="primary"
-            )  # 使用 primary 变体突出按钮
+            # init_btn = gr.Button(
+            #     "初始化应用", variant="primary"
+            # )  # 使用 primary 变体突出按钮
+            init_btn = gr.Button("初始化应用", elem_classes="primary_button")
             init_output = gr.Textbox(
                 label="初始化状态", interactive=False
             )  # 设置为不可编辑
@@ -403,7 +545,7 @@ def main():
                     specialized_api_key,
                     specialized_api_url,
                 ],
-                outputs=init_output,
+                outputs=[init_output, loading_indicator],
             )
 
         # 语音处理部分
@@ -466,23 +608,39 @@ def main():
 
             def process_and_update(audio_file, history, audio_text):
                 """处理音频并逐步更新界面"""
+                # 显示加载指示器
+                yield history, history, gr.update(value="", visible=False), gr.update(
+                    value="", visible=False
+                ), audio_text, gr.update(visible=True)
+
                 for new_history, specialized, error, new_audio_text in process_audio(
                     audio_file, history, audio_text
                 ):
                     if error:
                         yield history, history, gr.update(
                             value="", visible=False
-                        ), gr.update(value=error, visible=True), audio_text
+                        ), gr.update(value=error, visible=True), audio_text, gr.update(
+                            visible=False
+                        )
                     else:
                         yield new_history, new_history, gr.update(
                             value=specialized if specialized else "",
                             visible=specialized is not None,
-                        ), gr.update(value="", visible=False), new_audio_text
+                        ), gr.update(
+                            value="", visible=False
+                        ), new_audio_text, gr.update(
+                            visible=False
+                        )
 
             def process_text_and_update(
                 text, history, audio_text, max_tokens, temperature, top_p, top_k
             ):
                 """处理文本并逐步更新界面"""
+                # 显示加载指示器
+                yield history, history, gr.update(value="", visible=False), gr.update(
+                    value="", visible=False
+                ), audio_text, gr.update(value=text), gr.update(visible=True)
+
                 for new_history, specialized, error, new_audio_text in process_text(
                     text, history, audio_text, max_tokens, temperature, top_p, top_k
                 ):
@@ -491,6 +649,8 @@ def main():
                             value="", visible=False
                         ), gr.update(value=error, visible=True), audio_text, gr.update(
                             value=text
+                        ), gr.update(
+                            visible=False
                         )
                     else:
                         yield new_history, new_history, gr.update(
@@ -500,6 +660,8 @@ def main():
                             value="", visible=False
                         ), new_audio_text, gr.update(
                             value=text
+                        ), gr.update(
+                            visible=False
                         )
 
                 # 在处理完后清空输入框
@@ -510,6 +672,8 @@ def main():
                     visible=specialized is not None,
                 ), gr.update(value="", visible=False), new_audio_text, gr.update(
                     value=""
+                ), gr.update(
+                    visible=False
                 )
 
             def clear_chat_history():
@@ -532,6 +696,7 @@ def main():
                     specialized_output,
                     error_output,
                     audio_text,
+                    loading_indicator,
                 ],
             )
 
@@ -554,6 +719,7 @@ def main():
                     error_output,
                     audio_text,
                     text_input,
+                    loading_indicator,
                 ],
             )
 
