@@ -23,12 +23,12 @@ if not logger.handlers:
         level=logging.INFO,
         format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
     )
-
+#background: linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab, #f093fb, #f5576c, #4facfe, #00f2fe);
 # 自定义CSS样式 - 动态渐变背景和微光加载效果
 CUSTOM_CSS = """
 /* 动态渐变背景 */
 .gradio-container {
-    background: linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab, #f093fb, #f5576c, #4facfe, #00f2fe);
+    background: linear-gradient(-45deg, #dd8866, #d75588, #3399cc, #44ccaa, #e0aaff, #e06677, #66aaff, #33dddd);
     background-size: 400% 400%;
     animation: gradient-shift 15s ease infinite;
     min-height: 100vh;
@@ -114,16 +114,6 @@ CUSTOM_CSS = """
     box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
 }
 
-.primary-button::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: -100%;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
-    transition: left 0.5s;
-}
 
 .primary-button:hover::before {
     left: 100%;
@@ -139,6 +129,115 @@ CUSTOM_CSS = """
     margin: 16px 0;
 }
 
+/* 自定义 Tab 标签悬停效果*/
+.tabs .tab-button,
+.tab-nav .tab-item {
+    transition: all 0.3s ease !important;
+    background: linear-gradient(135deg, #ffffff10, #ffffff20) !important;
+    border-radius: 12px !important;
+    padding: 10px 20px !important;
+    font-weight: 600 !important;
+    backdrop-filter: none !important; 
+    font-size: 16px !important;
+}
+
+.tabs .tab-button:hover,
+.tab-nav .tab-item:hover {
+    transform: scale(1.03) !important;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2) !important;
+    background: linear-gradient(135deg, #ffffff20, #ffffff30) !important;
+}
+
+/* 系统状态指示灯样式 */
+.status-indicator {
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background-color: gray;
+    margin-right: 10px;
+    vertical-align: middle;
+    transition: background-color 0.3s ease;
+}
+
+.status-indicator.green {
+    background-color: #4caf50;
+    box-shadow: 0 0 6px rgba(76, 175, 80, 0.6);
+}
+
+.status-indicator.red {
+    background-color: #f44336;
+    animation: blink 1.2s infinite;
+    box-shadow: 0 0 8px rgba(244, 67, 54, 0.7);
+}
+
+@keyframes blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+}
+
+
+/* 麦克风录音脉冲动画 */
+.mic-pulse {
+    position: relative;
+    display: inline-block;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: #4caf50;
+    margin: 10px;
+}
+
+.mic-pulse::before {
+    content: '';
+    position: absolute;
+    top: -6px;
+    left: -6px;
+    border-radius: 50%;
+    width: 36px;
+    height: 36px;
+    background: rgba(76, 175, 80, 0.5);
+    opacity: 0;
+    animation: pulse 1.5s infinite ease-in-out;
+}
+
+@keyframes pulse {
+    0% {
+        transform: scale(0.8);
+        opacity: 0.8;
+    }
+    100% {
+        transform: scale(1.4);
+        opacity: 0;
+    }
+}
+
+
+/* 自定义标题样式 */
+.custom-header {
+    background-color: #bac0c3;
+    color: #1f2328;
+    padding: 8px 10px;
+    border-radius: 4px;
+    font-weight: 600;
+    font-size: 18px; 
+    font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif; 
+    text-transform: uppercase; 
+    letter-spacing: 0.5px; 
+    margin-bottom: 0px; 
+}
+
+/* 添加背景遮罩 */
+.gradio-container::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: rgba(255, 255, 255, 0.20); /* 柔和遮罩 */
+    z-index: 1;
+    pointer-events: none;
+}
+
 /* 聊天机器人美化 */
 .chatbot-container {
     background: rgba(255,255,255,0.05);
@@ -146,6 +245,8 @@ CUSTOM_CSS = """
     border-radius: 16px;
     border: 1px solid rgba(255,255,255,0.1);
 }
+
+
 """
 
 
@@ -204,10 +305,17 @@ def initialize_app(
 
     try:
         sense_app = SenseYourVoiceApp(config)
-        return "应用初始化成功！", gr.update(visible=False)  # 隐藏加载指示器
+        return (
+            "应用初始化成功！",
+            gr.update(visible=False),
+            gr.update(value="""<span class='status-indicator green'></span> 已就绪"""),
+        )
     except Exception as e:
-        return f"应用初始化失败: {str(e)}", gr.update(visible=False)  # 隐藏加载指示器
-
+        return (
+            f"应用初始化失败: {str(e)}",
+            gr.update(visible=False),
+            gr.update(value="""<span class='status-indicator red'></span> 初始化失败"""),
+        )
 
 def process_audio(audio_file, chat_history, audio_text):
     """处理上传的音频文件并逐步更新对话历史"""
@@ -222,6 +330,8 @@ def process_audio(audio_file, chat_history, audio_text):
         return
 
     try:
+        # 显示麦克风脉冲动画
+        yield chat_history, None, None, audio_text, gr.update(visible=True)
         # 构建对话历史上下文
         context = ""
         if chat_history:
@@ -232,8 +342,11 @@ def process_audio(audio_file, chat_history, audio_text):
         # 处理音频文件
         result = sense_app.process(audio_file, context=context)  # Removed instruction
 
+        # 关闭麦克风动画
+        yield chat_history, None, None, audio_text, gr.update(visible=False)
+
         if not result["success"]:
-            yield chat_history, None, result["error"], audio_text
+            yield chat_history, None, result["error"], audio_text, gr.update(visible=False)
             return
 
         # 获取音频转录内容
@@ -248,12 +361,13 @@ def process_audio(audio_file, chat_history, audio_text):
         for i in range(len(system_message) + 1):
             time.sleep(0.05)
             new_chat_history[-1] = ("", system_message[:i])
-            yield new_chat_history, None, None, audio_text
+            yield new_chat_history, None, None, audio_text, gr.update(visible=False)
 
         # 确保完整输出
-        yield new_chat_history, None, None, audio_text
+        
+        yield new_chat_history, None, None, audio_text, gr.update(visible=False)
     except Exception as e:
-        yield chat_history, None, f"处理过程发生错误: {str(e)}", audio_text
+        yield chat_history, None, f"处理过程发生错误: {str(e)}", audio_text, gr.update(visible=False)
 
 
 def process_text(
@@ -394,7 +508,24 @@ def process_text(
     except Exception as e:
         yield chat_history, None, f"处理过程发生错误: {str(e)}", audio_text
 
-
+def update_header_style(bg_color):
+    style_html = f"""
+    <style>
+    .custom-header {{
+        background-color: {bg_color};
+        color: #8b8b8b;
+        padding: 8px 15px;
+        border-radius: 4px;
+        font-weight: 600;
+        font-size: 16px; 
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif; 
+        text-transform: uppercase; 
+        letter-spacing: 0.5px; 
+        margin-bottom: 0px; 
+    }}
+    </style>
+    """
+    return style_html
 def main():
     # 加载默认配置
     default_config = load_config()
@@ -455,6 +586,12 @@ def main():
     with gr.Blocks(
         title="SenseYourVoice - 语音理解与处理", theme=grt.Citrus(), css=CUSTOM_CSS
     ) as demo:
+        status_indicator = gr.HTML("""
+            <div style="margin-bottom: 10px;">
+            <span class="status-indicator" id="status-light"></span>
+            <strong>系统状态：</strong><span id="status-text">未初始化</span>
+            </div>
+        """, visible=True)
         gr.Markdown(
             """
         # SenseYourVoice - 语音理解与处理
@@ -496,15 +633,21 @@ def main():
         #     )
 
         with gr.Tab("应用设置"):
+            #header_bg_color = gr.ColorPicker(label="选择小标题背景颜色", value="#e6e7e8")
+            #dynamic_style = gr.HTML("", visible=False)
+            #header_bg_color = gr.ColorPicker(...)
+            #dynamic_style = gr.HTML(...)
             with gr.Row():
                 with gr.Column(scale=1):  # 左侧放模型和设备
-                    model_dir = gr.Textbox(label="语音模型目录", value=args.model_dir)
-                    device = gr.Dropdown(
+                    with gr.Group():
+                        gr.HTML('<div class="custom-header">设备基础设置</div>', elem_classes=["custom-header"])
+                        model_dir = gr.Textbox(label="语音模型目录", value=args.model_dir)
+                        device = gr.Dropdown(
                         label="设备", choices=["cuda:0", "cpu"], value=args.device
-                    )
+                        )
                 with gr.Column(scale=2):  # 右侧放API设置，并分组
                     with gr.Group():
-                        gr.Markdown("### 理解模块 API")  # 添加小标题
+                        gr.HTML('<div class="custom-header">理解模块 API</div>', elem_classes=["custom-header"])  # 添加小标题
                         understanding_api_key = gr.Textbox(
                             label="API密钥",
                             value=args.understanding_api_key or "",
@@ -514,7 +657,7 @@ def main():
                             label="API地址", value=args.understanding_api_url or ""
                         )
                     with gr.Group():
-                        gr.Markdown("### 专业任务模块 API")  # 添加小标题
+                        gr.HTML('<div class="custom-header">专业任务模块 API</div>', elem_classes=["custom-header"])  # 添加小标题
                         specialized_api_key = gr.Textbox(
                             label="API密钥",
                             value=args.specialized_api_key or "",
@@ -540,26 +683,43 @@ def main():
                     specialized_api_key,
                     specialized_api_url,
                 ],
-                outputs=[init_output, loading_indicator],
+                outputs=[
+                    init_output, 
+                    loading_indicator,
+                    status_indicator
+                ],
             )
-
+            #header_bg_color.change(
+            #   fn=update_header_style,
+            #   inputs=header_bg_color,
+            #    outputs=dynamic_style
+            #)
         # 语音处理部分
         with gr.Tab("语音处理"):
+            mic_indicator = gr.HTML("""
+            <div style="text-align: center; display: none;" id="mic-indicator">
+            <div class="mic-pulse"></div>
+            <div style="color: white; font-size: 14px;">录音中...</div>
+            </div>
+            """, visible=False)
+
             # 添加State组件存储对话历史和音频文本
             chat_history = gr.State([])
             audio_text = gr.State("")
 
             with gr.Row():
                 with gr.Column():
-                    gr.Markdown("### 音频输入")
-                    audio_input = gr.Audio(label="上传音频文件", type="filepath")
-                    process_audio_btn = gr.Button("处理音频")
+                    with gr.Group():
+                        gr.HTML('<div class="custom-header">音频处理</div>', elem_classes=["custom-header"])
+                        audio_input = gr.Audio(label="上传音频文件", type="filepath")
+                        process_audio_btn = gr.Button("处理音频")
 
                 with gr.Column():
-                    gr.Markdown("### 提问与参数设置")
-                    text_input = gr.Textbox(
-                        label="输入问题", placeholder="请根据音频内容提问"
-                    )
+                    with gr.Group():
+                        gr.HTML('<div class="custom-header">提问与参数设置</div>', elem_classes=["custom-header"])
+                        text_input = gr.Textbox(
+                            label="输入问题", placeholder="请根据音频内容提问"
+                        )
                     with gr.Accordion("参数设置", open=False):
                         max_tokens = gr.Slider(
                             minimum=1,
@@ -602,30 +762,51 @@ def main():
 
             def process_and_update(audio_file, history, audio_text):
                 """处理音频并逐步更新界面"""
-                # 显示加载指示器
-                yield history, history, gr.update(value="", visible=False), gr.update(
-                    value="", visible=False
-                ), audio_text, gr.update(visible=True)
+                # 显示加载指示器 + 麦克风动画
+                yield (
+                history,
+                history,
+                gr.update(value="", visible=False),
+                gr.update(value="", visible=False),
+                audio_text,
+                gr.update(visible=True),   # loading_indicator
+                gr.update(visible=True)    # mic_indicator
+                )
 
-                for new_history, specialized, error, new_audio_text in process_audio(
-                    audio_file, history, audio_text
+                for new_history, specialized, error, new_audio_text, mic_update in process_audio(
+                audio_file, history, audio_text
                 ):
                     if error:
-                        yield history, history, gr.update(
-                            value="", visible=False
-                        ), gr.update(value=error, visible=True), audio_text, gr.update(
-                            visible=False
+                        yield (
+                        history,
+                        history,
+                        gr.update(value="", visible=False),
+                        gr.update(value=error, visible=True),
+                        audio_text,
+                        gr.update(visible=False),
+                        mic_update
                         )
                     else:
-                        yield new_history, new_history, gr.update(
-                            value=specialized if specialized else "",
-                            visible=specialized is not None,
-                        ), gr.update(
-                            value="", visible=False
-                        ), new_audio_text, gr.update(
-                            visible=False
+                        yield (
+                        new_history,
+                        new_history,
+                        gr.update(value=specialized if specialized else "", visible=specialized is not None),
+                        gr.update(value="", visible=False),
+                        new_audio_text,
+                        gr.update(visible=False),
+                        mic_update
                         )
 
+                # 最终关闭加载和麦克风动画
+                yield (
+                new_history,
+                new_history,
+                gr.update(value=specialized if specialized else "", visible=specialized is not None),
+                gr.update(value="", visible=False),
+                new_audio_text,
+                gr.update(visible=False),
+                gr.update(visible=False)
+                )
             def process_text_and_update(
                 text, history, audio_text, max_tokens, temperature, top_p, top_k
             ):
@@ -688,6 +869,7 @@ def main():
                     error_output,
                     audio_text,
                     loading_indicator,
+                    mic_indicator
                 ],
             )
 
