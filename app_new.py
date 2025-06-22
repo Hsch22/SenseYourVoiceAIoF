@@ -109,8 +109,24 @@ class SenseYourVoiceApp:
 
             # 步骤2: 理解与分析，处理流式输出
             logger.info("开始进行文本理解与分析")
+            
+            # 增强语音内容的上下文构建
+            enhanced_context = ""
+            if context:
+                enhanced_context += f"历史上下文: {context}\n\n"
+            
+            # 添加语音内容强调指令
+            enhanced_context += f"""
+=== 用户语音输入 ===
+{text}
+=== 语音输入结束 ===
+
+请基于以上语音内容进行分析和理解。这是用户的核心输入，请重点关注。
+
+"""
+            
             understanding_stream = self.understanding.analyze(
-                text, instruction, context
+                text, instruction, enhanced_context
             )
 
             full_understanding_response = ""
