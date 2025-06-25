@@ -31,7 +31,7 @@ SenseYourVoice 是一个多功能语音理解与处理应用，基于 **SenseVoi
 
 ```bash
 git clone https://github.com/Hsch22/SenseYourVoiceAIoF.git
-cd SenseYourVoice
+cd SenseYourVoiceAIoF
 ```
 
 #### 2. 安装依赖
@@ -46,26 +46,30 @@ pip install -r requirements.txt
 > pip install -r requirements.txt -i https://pypi.tuna.tsinghua.edu.cn/simple
 > ```
 
-#### 3. 下载模型
+#### 3. 模型下载说明
 
-本项目使用 **SenseVoice-Small 模型**，请从以下地址下载模型文件：
+> ⚠️ **重要提示**：本应用使用 **SenseVoice-Small** 模型，首次运行时会自动下载模型文件。
 
-🔗 [SenseVoice-Small 模型下载页](https://modelscope.cn/models/iic/SenseVoiceSmall/summary)
+**模型下载信息**：
+- 📦 **模型大小**：约 **2-3 GB**
+- 🌐 **网络要求**：首次运行**必须联网**，用于自动下载模型
+- ⏱️ **下载时间**：根据网络速度，通常需要 **10分钟**左右
 
-将模型文件放置在项目根目录下的 `iic/SenseVoiceSmall` 文件夹中。如果您的模型存放在其他位置，请在启动时通过 `--model_dir` 参数指定其完整路径。
+**首次启动注意事项**：
+- 🔌 确保网络连接稳定
+- 💿 确保有足够的磁盘空间
+- ⏳ 首次启动会显示模型下载进度，请耐心等待
+- 🚫 下载期间请勿关闭应用程序
 
-##### 📁 模型存放位置说明
-
-| 类型     | 存放方式说明 |
-|----------|---------------|
-| 默认位置 | 如果模型位于项目根目录下的 `iic/SenseVoiceSmall`（例如 `C:\Your\Project\Path\SenseYourVoice\iic\SenseVoiceSmall`），无需指定 `--model_dir`，应用会自动识别该路径。 |
-| 自定义位置 | 如果模型位于其他目录（如全局缓存 `C:\Path\To\Your\Model\Cache\iic\SenseVoiceSmall`），则必须使用 `--model_dir` 参数指定路径。 |
+> 📌 **说明**：模型下载完成后，后续启动将直接使用本地缓存，无需重新下载。
 
 ---
 
 ## ▶️ 使用方法
 
 ### 🚀 启动应用
+
+> ⚠️ **首次使用提醒**：如果是第一次运行，请确保网络连接正常，应用会自动下载 SenseVoice-Small 模型。
 
 假设您的项目克隆或解压到了 `C:\\Path\\To\\Your\\SenseYourVoiceProject` 目录，先通过命令行进入该目录：
 
