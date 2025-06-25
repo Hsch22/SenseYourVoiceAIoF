@@ -126,7 +126,7 @@ class SenseYourVoiceApp:
 """
             
             understanding_stream = self.understanding.analyze(
-                text, instruction, enhanced_context
+                text, context=enhanced_context
             )
 
             full_understanding_response = ""
