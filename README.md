@@ -71,10 +71,10 @@ pip install -r requirements.txt
 
 > ⚠️ **首次使用提醒**：如果是第一次运行，请确保网络连接正常，应用会自动下载 SenseVoice-Small 模型。
 
-假设您的项目克隆或解压到了 `C:\\Path\\To\\Your\\SenseYourVoiceProject` 目录，先通过命令行进入该目录：
+假设您的项目克隆或解压到了 `C:\\Path\\To\\Your\\SenseYourVoiceAIoF` 目录，先通过命令行进入该目录：
 
 ```bash
-cd C:\\Path\\To\\Your\\SenseYourVoiceProject
+cd C:\\Path\\To\\Your\\SenseYourVoiceAIoF
 ```
 
 然后根据需要选择以下任意一种方式运行应用：
